@@ -10,7 +10,9 @@ def get_data(file_name, date):
     :return: arrays of: date & time, latitude, longitude [np.array]
     """
     date_time, latitude, longitude = [], [], []
-    data_set = open(file_name, 'r')
+
+    with open(file_name, 'r') as file:
+        data_set = file.readlines()
 
     for line in data_set:
         data = line.split(",")
@@ -77,7 +79,7 @@ def set_title_labels(title, horizontal_axis_title, vertical_axis_title):
 
 
 def main():
-    file = "sample.txt"
+    file = "data/sample.txt"
     date = "2008-02-04"
     # average fuel consumption [liter / 100 km]
     afc = 9.2260
@@ -99,18 +101,14 @@ def main():
         fuel_consumption = calculate_fuel_consumption(distance, afc)
         fuel_consumption_array.append(fuel_consumption)
 
-        print("\nno", i,
-              "\nfrom:", date_time[i],
-              "to:", date_time[i + 1],
-              "\ndistance travelled:", distance, "km",
-              "\nspeed:", speed,
-              "\nforecast value of the fuel used:", fuel_consumption)
+        element = f"\nno {i}\nfrom: {date_time[i]} to: {date_time[i + 1]}\ndistance travelled: {distance} [km] \nspeed: {speed} [km/h]\nforecast value of the fuel used: {fuel_consumption}[l]"
+        print(element)
 
-    total_distance = sum(speed_array)
-    print("\nTotal \nfrom:", date_time[0],
-          "to:", date_time[-1],
-          "\ndistance travelled:", total_distance, "km",
-          "\nforecast value of the fuel used:", sum(fuel_consumption_array))
+    total_distance = sum(distance_array)
+    total_fuel_consumption = sum(fuel_consumption_array)
+
+    total = f"\nTotal \nfrom: {date_time[0]} to: {date_time[-1]} \ndistance travelled: {total_distance} [km] \nforecast value of the fuel used: {total_fuel_consumption} [l]"
+    print(total)
 
     set_title_labels("Locations visited", "longitude[°E]", "latitude[°N]")
 
@@ -120,7 +118,7 @@ def main():
 
     plt.figure()
     plt.plot(speed_array, fuel_consumption_array, 'r.', alpha=0.7)
-    set_title_labels("Fuel consumption by distance", "distance[km]", "fuel consumption[l]")
+    set_title_labels("Fuel consumption by speed", "speed[km/h]", "fuel consumption[l]")
     plt.show()
 
 
