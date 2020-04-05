@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
-import datetime as d
+import datetime as da
+from math import cos, asin, sqrt, pi
 
 
 def get_data(file_name, date):
@@ -24,21 +25,17 @@ def get_data(file_name, date):
     return np.array(date_time), np.array(latitude), np.array(longitude)
 
 
-def calculate_distance(latitude, longitude):
+def calculate_distance(latitude_1, longitude_1, latitude_2, longitude_2):
     """
-    reference: https://pl.wikibooks.org/wiki/Astronomiczne_podstawy_geografii/Odległości#Obliczanie_odległości_pomijając_krzywiznę_Ziemi
-    :param latitude: [°N]
-    :param longitude: [°E]
-    :return: array of distances [np.array]
+    reference:
+    :param latitude: [°N/°S]
+    :param longitude: [°E/°W]
+    :return: distance [km]
     """
-    total_distance = []
-
-    for i in range(0, len(latitude) - 1):
-        partial_distance = np.sqrt((latitude[i + 1] - latitude[i]) ** 2 + (
-                np.cos((latitude[i] * np.pi) / 180) * (longitude[i + 1] - longitude[i])) ** 2) * 40075.704 / 360
-        total_distance.append(partial_distance)
-
-    return np.array(total_distance)
+    conversion = pi / 180
+    formula = 0.5 - cos((latitude_2 - latitude_1) * conversion) / 2 + cos(latitude_1 * conversion) * cos(
+        latitude_2 * conversion) * (1 - cos((longitude_2 - longitude_1) * conversion)) / 2
+    return 2 * 6371 * asin(sqrt(formula))
 
 
 def calculate_time(current, previous):
@@ -48,7 +45,7 @@ def calculate_time(current, previous):
     :return: duration [hours]
     """
     format_str = '%Y-%m-%d %H:%M:%S'
-    return (d.datetime.strptime(current, format_str) - d.datetime.strptime(previous, format_str)).seconds / 3600
+    return (da.datetime.strptime(current, format_str) - da.datetime.strptime(previous, format_str)).seconds / 3600
 
 
 def calculate_speed(distance, time):
@@ -92,7 +89,7 @@ def main():
     for i in range(len(longitude) - 1):
         plt.plot(longitude[i], latitude[i], '.', color='blue', alpha=0.5)
 
-        distance = calculate_distance(latitude, longitude)[i]
+        distance = calculate_distance(latitude[i], longitude[i], latitude[i + 1], longitude[i + 1])
         distance_array.append(distance)
 
         speed = calculate_speed(distance, calculate_time(date_time[i + 1], date_time[i]))
@@ -101,14 +98,14 @@ def main():
         fuel_consumption = calculate_fuel_consumption(distance, afc)
         fuel_consumption_array.append(fuel_consumption)
 
-        element = f"\nno {i}\nfrom: {date_time[i]} to: {date_time[i + 1]}\ndistance travelled: {distance} [km] \nspeed: {speed} [km/h]\nforecast value of the fuel used: {fuel_consumption}[l]"
-        print(element)
+        print(f"\nno {i}\nfrom: {date_time[i]} to: {date_time[i + 1]}\ndistance travelled: {distance} [km]"
+              f"\nspeed: {speed} [km/h]\nforecast value of the fuel used: {fuel_consumption}[l]")
 
     total_distance = sum(distance_array)
     total_fuel_consumption = sum(fuel_consumption_array)
 
-    total = f"\nTotal \nfrom: {date_time[0]} to: {date_time[-1]} \ndistance travelled: {total_distance} [km] \nforecast value of the fuel used: {total_fuel_consumption} [l]"
-    print(total)
+    print(f"\nTotal \nfrom: {date_time[0]} to: {date_time[-1]} \ndistance travelled: {total_distance} [km]"
+          f" \nforecast value of the fuel used: {total_fuel_consumption} [l]")
 
     set_title_labels("Locations visited", "longitude[°E]", "latitude[°N]")
 
