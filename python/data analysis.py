@@ -76,7 +76,7 @@ def set_title_labels(title, horizontal_axis_title, vertical_axis_title):
 
 
 def main():
-    file = "data/sample.txt"
+    file = "../data/sample.txt"
     date = "2008-02-04"
     # average fuel consumption [liter / 100 km]
     afc = 9.2260
