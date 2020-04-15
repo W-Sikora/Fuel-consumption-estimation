@@ -4,6 +4,11 @@ from pathlib import Path
 
 
 def create_worksheet(file_name, path):
+    """
+    :param file_name: name of new Excel file
+    :param path: exact location of the directory with the files
+    :return: Excel file with all the necessary data
+    """
     glob_path = Path(path)
     file_list = [str(p) for p in glob_path.glob("**/*.txt")]
     files = []
