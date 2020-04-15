@@ -4,7 +4,7 @@ import datetime as da
 from math import cos, asin, sqrt, pi
 
 
-def get_data(file_name, date):
+def get_data(file_name, date=None):
     """
     :param file_name: file name with extension
     :param date: date or date with time [%Y-%m-%d or %Y-%m-%d %H:%M:%S]
@@ -15,14 +15,22 @@ def get_data(file_name, date):
     with open(file_name, 'r') as file:
         data_set = file.readlines()
 
-    for line in data_set:
-        data = line.split(",")
-        if date in data[1]:
+    if not date:
+        for line in data_set:
+            data = line.split(",")
             date_time.append(data[1])
             latitude.append(float(data[3].rstrip("\n")))
             longitude.append(float(data[2]))
+        return np.array(date_time), np.array(latitude), np.array(longitude)
 
-    return np.array(date_time), np.array(latitude), np.array(longitude)
+    else:
+        for line in data_set:
+            data = line.split(",")
+            if date in data[1]:
+                date_time.append(data[1])
+                latitude.append(float(data[3].rstrip("\n")))
+                longitude.append(float(data[2]))
+        return np.array(date_time), np.array(latitude), np.array(longitude)
 
 
 def calculate_distance(latitude_1, longitude_1, latitude_2, longitude_2):
