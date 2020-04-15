@@ -1,18 +1,17 @@
 import xlsxwriter
 from data_analysis import get_data, calculate_distance, calculate_time, calculate_speed
 from pathlib import Path
+import os
 
 
-def create_worksheet(file_name, path):
+def create_worksheet(file_name):
     """
     :param file_name: name of new Excel file
-    :param path: exact location of the directory with the files
     :return: Excel file with all the necessary data
     """
-    glob_path = Path(path)
+    glob_path = Path(f'{os.path.dirname(os.path.abspath(os.getcwd()))}/data')
     file_list = [str(p) for p in glob_path.glob("**/*.txt")]
     files = []
-
 
     for file in file_list:
         files.append('../data/' + file.split('\\')[-1])
@@ -55,4 +54,4 @@ def create_worksheet(file_name, path):
 
 
 if __name__ == '__main__':
-    create_worksheet('data.xlsx', r'C:\Users\WS\PycharmProjects\RNN\data')
+    create_worksheet('data.xlsx')
