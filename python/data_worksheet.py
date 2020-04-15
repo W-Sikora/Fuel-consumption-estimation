@@ -17,7 +17,6 @@ def create_worksheet(file_name, path):
     for file in file_list:
         files.append('../data/' + file.split('\\')[-1])
 
-    print(files)
     workbook = xlsxwriter.Workbook(file_name)
     worksheet = workbook.add_worksheet()
 
@@ -30,7 +29,6 @@ def create_worksheet(file_name, path):
     iterator = 1
     for file in files:
         date_time = get_data(file)[0]
-        print(len(date_time))
         latitude = get_data(file)[1]
         longitude = get_data(file)[2]
         distance, time, speed = [], [], []
