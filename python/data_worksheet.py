@@ -1,7 +1,65 @@
 import xlsxwriter
-from data_analysis import get_data, calculate_distance, calculate_time, calculate_speed
+from data_analysis import calculate_time
 from pathlib import Path
 import os
+import numpy as np
+from math import cos, asin, sqrt, pi
+
+
+def get_data(file_name, date=None):
+    """
+    :param file_name: file name with extension
+    :param date: date or date with time [%Y-%m-%d or %Y-%m-%d %H:%M:%S]
+    :return: arrays of: date & time, latitude, longitude [np.array]
+    """
+    date_time, latitude, longitude = [], [], []
+
+    with open(file_name, 'r') as file:
+        data_set = file.readlines()
+
+    if not date:
+        for line in data_set:
+            data = line.split(",")
+            date_time.append(data[1])
+            latitude.append(float(data[3].rstrip("\n")))
+            longitude.append(float(data[2]))
+        return np.array(date_time), np.array(latitude), np.array(longitude)
+
+    else:
+        for line in data_set:
+            data = line.split(",")
+            if date in data[1]:
+                date_time.append(data[1])
+                latitude.append(float(data[3].rstrip("\n")))
+                longitude.append(float(data[2]))
+        return np.array(date_time), np.array(latitude), np.array(longitude)
+
+
+def calculate_speed(distance, time):
+    """
+    :param distance: [km]
+    :param time: [hours]
+    :return: [km / h]
+    """
+    if time != 0:
+        return distance / time
+    else:
+        return 0
+
+
+def calculate_distance(latitude_1, longitude_1, latitude_2, longitude_2):
+    """
+    reference:
+    :param longitude_1: [°E/°W]
+    :param latitude_1:  [°N/°S]
+    :param longitude_2: [°E/°W]
+    :param latitude_2: [°N/°S]
+    :return: distance [km]
+    """
+    conversion = pi / 180
+    formula = 0.5 - cos((latitude_2 - latitude_1) * conversion) / 2 + cos(latitude_1 * conversion) * cos(
+        latitude_2 * conversion) * (1 - cos((longitude_2 - longitude_1) * conversion)) / 2
+    return 2 * 6371 * asin(sqrt(formula))
 
 
 def create_worksheet(file_name):
