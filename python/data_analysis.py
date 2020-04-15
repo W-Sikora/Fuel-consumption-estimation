@@ -32,7 +32,7 @@ def get_data(file_name, date=None):
                 longitude.append(float(data[2]))
         return np.array(date_time), np.array(latitude), np.array(longitude)
 
-
+      
 def calculate_distance(latitude_1, longitude_1, latitude_2, longitude_2):
     """
     reference:
