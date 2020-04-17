@@ -1,15 +1,15 @@
-import xlsxwriter
-from data_analysis import calculate_time
+from data_analysis import calculate_time, pi_controller
 from pathlib import Path
 import os
 import numpy as np
 from math import cos, asin, sqrt, pi
+from datetime import datetime
+import sqlite3
 
 
-def get_data(file_name, date=None):
+def get_data(file_name):
     """
     :param file_name: file name with extension
-    :param date: date or date with time [%Y-%m-%d or %Y-%m-%d %H:%M:%S]
     :return: arrays of: date & time, latitude, longitude [np.array]
     """
     date_time, latitude, longitude = [], [], []
@@ -17,22 +17,13 @@ def get_data(file_name, date=None):
     with open(file_name, 'r') as file:
         data_set = file.readlines()
 
-    if not date:
-        for line in data_set:
-            data = line.split(",")
-            date_time.append(data[1])
-            latitude.append(float(data[3].rstrip("\n")))
-            longitude.append(float(data[2]))
-        return np.array(date_time), np.array(latitude), np.array(longitude)
+    for line in data_set:
+        data = line.split(",")
+        date_time.append(data[1])
+        latitude.append(float(data[3].rstrip("\n")))
+        longitude.append(float(data[2]))
 
-    else:
-        for line in data_set:
-            data = line.split(",")
-            if date in data[1]:
-                date_time.append(data[1])
-                latitude.append(float(data[3].rstrip("\n")))
-                longitude.append(float(data[2]))
-        return np.array(date_time), np.array(latitude), np.array(longitude)
+    return np.array(date_time), np.array(latitude), np.array(longitude)
 
 
 def calculate_speed(distance, time):
@@ -64,52 +55,52 @@ def calculate_distance(latitude_1, longitude_1, latitude_2, longitude_2):
 
 def create_worksheet(file_name):
     """
-    :param file_name: name of new Excel file
+    :param file_name: name of new database file
     :return: Excel file with all the necessary data
     """
     glob_path = Path(f'{os.path.dirname(os.path.abspath(os.getcwd()))}/data')
     file_list = [str(p) for p in glob_path.glob("**/*.txt")]
     files = []
-
     for file in file_list:
         files.append('../data/' + file.split('\\')[-1])
 
-    workbook = xlsxwriter.Workbook(file_name)
-    worksheet = workbook.add_worksheet()
+    conn = sqlite3.connect(file_name)
+    c = conn.cursor()
 
-    names = ['date&time', 'date&time2', 'latitude', 'longitude', 'latitude2', 'longitude2', 'distance', 'speed',
-             'fuel consumption']
+    try:
+        c.execute("DROP TABLE DATA")
+    except sqlite3.OperationalError:
+        pass
 
-    for i in range(len(names)):
-        worksheet.write(0, i, names[i])
+    c.execute('''CREATE TABLE DATA
+    (ID INTEGER PRIMARY KEY NOT NULL,
+    Date1 DATE NOT NULL,
+    Date2 DATE NOT NULL,
+    Distance FLOAT NOT NULL,
+    Speed FLOAT NOT NULL,
+    Fuel_consumption FLOAT NOT NULL);''')
 
-    iterator = 1
+    start = datetime.now()
     for file in files:
-        date_time = get_data(file)[0]
-        latitude = get_data(file)[1]
-        longitude = get_data(file)[2]
-        distance, time, speed = [], [], []
-        length = len(date_time)
+        print(f'file: {files.index(file)+1}/{len(files)}')
+        file_data = []
+        date_time, latitude, longitude = get_data(file)
 
-        for i in range(length - 1):
-            distance.append(calculate_distance(latitude[i], longitude[i], latitude[i + 1], longitude[i + 1]))
-            time.append(calculate_time(date_time[i + 1], date_time[i]))
-            speed.append(calculate_speed(distance[i], time[i]))
+        for i in range(len(date_time) - 1):
+            distance = calculate_distance(latitude[i], longitude[i], latitude[i + 1], longitude[i + 1])
+            time = calculate_time(date_time[i + 1], date_time[i])
+            speed = calculate_speed(distance, time)
+            if not time == 0 and speed < 130:
+                file_data.append([date_time[i], date_time[i + 1], distance, speed])
 
-        for i in range(length - 1):
-            worksheet.write(iterator, 0, date_time[i])
-            worksheet.write(iterator, 1, date_time[i + 1])
-            worksheet.write(iterator, 2, latitude[i])
-            worksheet.write(iterator, 3, longitude[i])
-            worksheet.write(iterator, 4, latitude[i + 1])
-            worksheet.write(iterator, 5, longitude[i + 1])
-            worksheet.write(iterator, 6, distance[i])
-            worksheet.write(iterator, 7, speed[i])
-            worksheet.write(iterator, 8, '-')
-            iterator += 1
+        file_data = pi_controller(file_data, 30)
+        c.executemany("INSERT INTO DATA (Date1, Date2, Distance, Speed, fuel_consumption) "
+                      "VALUES (?, ?, ?, ?, ?)", file_data)
 
-    workbook.close()
+    conn.commit()
+    conn.close()
+    print(f'\nDone\nTime: {datetime.now() - start}')
 
 
 if __name__ == '__main__':
-    create_worksheet('data.xlsx')
+    create_worksheet('data.db')

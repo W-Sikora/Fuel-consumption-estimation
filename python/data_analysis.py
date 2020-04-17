@@ -1,9 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import datetime as da
-from math import cos, asin, sqrt, pi
 import pandas as pd
 import os
+import sqlite3
 
 
 def calculate_distance(speed, step):
@@ -42,20 +42,20 @@ def calculate_speed_with_PI(speed_previous, speed, time, h):
 
     m = 1500  # [kg]
     mu = 50 * 3.6  # [N * s / m] opór
-    v_zad = speed  # [km/h]
+    set_v = speed  # [km/h]
 
-    v_pocz = speed_previous  # [km/h]
-    v[0] = v_pocz
+    initial_v = speed_previous  # [km/h]
+    v[0] = initial_v
 
-    e[0] = v_zad - v[0]
+    e[0] = set_v - v[0]
     time_array = np.append(time_array, step)
     k_p, k_i = 100000, 15000
-    e_skum = e[0]
+    cum_e = e[0]
     for i in range(t.size - 1):
         v[i + 1] = v[i] + h * (-mu * v[i] + u[i]) / m
-        e[i + 1] = v_zad - v[i + 1]
-        e_skum += h * e[i + 1]
-        u[i + 1] = k_p * e[i + 1] + k_i * e_skum
+        e[i + 1] = set_v - v[i + 1]
+        cum_e += h * e[i + 1]
+        u[i + 1] = k_p * e[i + 1] + k_i * cum_e
         step = step + h
         time_array = np.append(time_array, step)
 
@@ -83,12 +83,12 @@ def calculate_fuel_consumption(v):
 def fuel_consumption(speed_PI):
     fuel_consumption_array = []
     for z in range(len(speed_PI)):
-        fuel_consumption = calculate_fuel_consumption(speed_PI[z])
-        fuel_consumption_array.append(fuel_consumption)
+        fuel = calculate_fuel_consumption(speed_PI[z])
+        fuel_consumption_array.append(fuel)
     return fuel_consumption_array
 
 
-def pi_controller(data, step=1):
+def pi_controller(data, step=30):
     """
     :param data: array of arrays that contain [[date1, date2, distance, speed],..]
     :param step: step for regulator in seconds
@@ -118,21 +118,19 @@ def pi_controller(data, step=1):
 
 
 def main():
-    data = []
-    df = pd.read_excel(io=f'{os.path.abspath(os.getcwd())}/data.xlsx', sheet_name='Sheet1')
-
-    for i in range(100):
-        data.append(df.loc[i])
-    export = pi_controller(data)
-
+    conn = sqlite3.connect('data.db')
+    c = conn.cursor()
+    data = c.execute("SELECT Date1, Date2, Distance, Speed, Fuel_consumption FROM DATA").fetchall()
+    h = 30
+    export = pi_controller(data[:100], h)
     time, pr = [], []
     step = 0
     for i in export:
         time.append(step)
-        step += 1 / 3600
+        step += h / 3600
         pr.append(i[3])
     plt.plot(time, pr, label='v - prędkość [km/h]')
-    plt.xlabel('t [s]', fontsize=14)
+    plt.xlabel('t [h]', fontsize=14)
     plt.legend(fontsize=14, loc='upper left')
     plt.show()
 
