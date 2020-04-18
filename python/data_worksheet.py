@@ -68,17 +68,17 @@ def create_worksheet(file_name):
     c = conn.cursor()
 
     try:
-        c.execute("DROP TABLE DATA")
+        c.execute("DROP TABLE data")
     except sqlite3.OperationalError:
         pass
 
-    c.execute('''CREATE TABLE DATA
-    (ID INTEGER PRIMARY KEY NOT NULL,
-    Date1 DATE NOT NULL,
-    Date2 DATE NOT NULL,
-    Distance FLOAT NOT NULL,
-    Speed FLOAT NOT NULL,
-    Fuel_consumption FLOAT NOT NULL);''')
+    c.execute('''CREATE TABLE data
+    (id INTEGER PRIMARY KEY NOT NULL,
+    date_previous  DATE NOT NULL,
+    date_current DATE NOT NULL,
+    distance FLOAT NOT NULL,
+    speed FLOAT NOT NULL,
+    fuel_consumption FLOAT NOT NULL);''')
 
     start = datetime.now()
     for file in files:
@@ -94,7 +94,7 @@ def create_worksheet(file_name):
                 file_data.append([date_time[i], date_time[i + 1], distance, speed])
 
         file_data = pi_controller(file_data, 30)
-        c.executemany("INSERT INTO DATA (Date1, Date2, Distance, Speed, fuel_consumption) "
+        c.executemany("INSERT INTO data (date_previous, date_current, distance, speed, fuel_consumption) "
                       "VALUES (?, ?, ?, ?, ?)", file_data)
 
     conn.commit()
