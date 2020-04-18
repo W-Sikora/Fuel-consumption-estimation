@@ -120,7 +120,7 @@ def pi_controller(data, step=30):
 def main():
     conn = sqlite3.connect('data.db')
     c = conn.cursor()
-    data = c.execute("SELECT Date1, Date2, Distance, Speed, Fuel_consumption FROM DATA").fetchall()
+    data = c.execute("SELECT date_previous, date_current, distance, speed, fuel_consumption FROM data").fetchall()
     h = 30
     export = pi_controller(data[:100], h)
     time, pr = [], []
