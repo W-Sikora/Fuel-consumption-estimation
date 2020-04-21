@@ -1,9 +1,5 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import datetime as da
-import pandas as pd
-import os
-import sqlite3
 
 
 def calculate_distance(speed, step):
@@ -115,25 +111,3 @@ def pi_controller(data, step=30):
             row.append(fuel_consumption_array[j])
             export.append(row)
     return export
-
-
-def main():
-    conn = sqlite3.connect('data.db')
-    c = conn.cursor()
-    data = c.execute("SELECT Date1, Date2, Distance, Speed, Fuel_consumption FROM DATA").fetchall()
-    h = 30
-    export = pi_controller(data[:100], h)
-    time, pr = [], []
-    step = 0
-    for i in export:
-        time.append(step)
-        step += h / 3600
-        pr.append(i[3])
-    plt.plot(time, pr, label='v - prędkość [km/h]')
-    plt.xlabel('t [h]', fontsize=14)
-    plt.legend(fontsize=14, loc='upper left')
-    plt.show()
-
-
-if __name__ == '__main__':
-    main()

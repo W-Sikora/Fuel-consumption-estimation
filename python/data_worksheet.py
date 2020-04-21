@@ -5,6 +5,7 @@ import numpy as np
 from math import cos, asin, sqrt, pi
 from datetime import datetime
 import sqlite3
+import matplotlib.pyplot as plt
 
 
 def get_data(file_name):
@@ -53,8 +54,23 @@ def calculate_distance(latitude_1, longitude_1, latitude_2, longitude_2):
     return 2 * 6371 * asin(sqrt(formula))
 
 
-def create_worksheet(file_name):
+def show_plot(data, h):
+    time, pr = [], []
+    step = 0
+    for i in data:
+        time.append(step)
+        step += h / 3600
+        pr.append(i[3])
+    plt.plot(time, pr, label='v - prędkość [km/h]')
+    plt.xlabel('t [h]', fontsize=14)
+    plt.legend(fontsize=14, loc='upper left')
+    plt.show()
+
+
+def create_worksheet(file_name, step=30, test=False):
     """
+    :param step: step for regulator in seconds
+    :param test: True if we want only test pi controller
     :param file_name: name of new database file
     :return: Excel file with all the necessary data
     """
@@ -68,21 +84,21 @@ def create_worksheet(file_name):
     c = conn.cursor()
 
     try:
-        c.execute("DROP TABLE DATA")
+        c.execute("DROP TABLE data")
     except sqlite3.OperationalError:
         pass
 
-    c.execute('''CREATE TABLE DATA
-    (ID INTEGER PRIMARY KEY NOT NULL,
-    Date1 DATE NOT NULL,
-    Date2 DATE NOT NULL,
-    Distance FLOAT NOT NULL,
-    Speed FLOAT NOT NULL,
-    Fuel_consumption FLOAT NOT NULL);''')
+    c.execute('''CREATE TABLE data
+    (id INTEGER PRIMARY KEY NOT NULL,
+    date_previous  DATE NOT NULL,
+    date_current DATE NOT NULL,
+    distance FLOAT NOT NULL,
+    speed FLOAT NOT NULL,
+    fuel_consumption FLOAT);''')
 
     start = datetime.now()
     for file in files:
-        print(f'file: {files.index(file)+1}/{len(files)}')
+        print(f'file: {files.index(file) + 1}/{len(files)}')
         file_data = []
         date_time, latitude, longitude = get_data(file)
 
@@ -93,9 +109,12 @@ def create_worksheet(file_name):
             if not time == 0 and speed < 130:
                 file_data.append([date_time[i], date_time[i + 1], distance, speed])
 
-        file_data = pi_controller(file_data, 30)
-        c.executemany("INSERT INTO DATA (Date1, Date2, Distance, Speed, fuel_consumption) "
-                      "VALUES (?, ?, ?, ?, ?)", file_data)
+        file_data = pi_controller(file_data, step)
+        if test:
+            show_plot(file_data, step)
+        else:
+            c.executemany("INSERT INTO data (date_previous, date_current, distance, speed, fuel_consumption) "
+                          "VALUES (?, ?, ?, ?, ?)", file_data)
 
     conn.commit()
     conn.close()
