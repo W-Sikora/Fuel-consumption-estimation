@@ -67,7 +67,7 @@ def show_plot(data, h):
     plt.show()
 
 
-def create_worksheet(file_name, step=30, test=False):
+def create_worksheet(file_name, step=30):
     """
     :param step: step for regulator in seconds
     :param test: True if we want only test pi controller
@@ -111,10 +111,7 @@ def create_worksheet(file_name, step=30, test=False):
 
         file_data = pi_controller(file_data, 30)
 
-        if test:
-            show_plot(file_data, step)
-        else:
-            c.executemany("INSERT INTO data (date_previous, date_current, distance, speed, fuel_consumption) "
+        c.executemany("INSERT INTO data (date_previous, date_current, distance, speed, fuel_consumption) "
                           "VALUES (?, ?, ?, ?, ?)", file_data)
 
     conn.commit()
