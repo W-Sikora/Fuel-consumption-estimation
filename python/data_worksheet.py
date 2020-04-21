@@ -94,7 +94,7 @@ def create_worksheet(file_name, step=30, test=False):
     date_current DATE NOT NULL,
     distance FLOAT NOT NULL,
     speed FLOAT NOT NULL,
-    fuel_consumption FLOAT);''')
+    fuel_consumption FLOAT NOT NULL);''')
 
     start = datetime.now()
     for file in files:
