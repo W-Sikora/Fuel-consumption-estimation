@@ -5,6 +5,7 @@ import numpy as np
 from math import cos, asin, sqrt, pi
 from datetime import datetime
 import sqlite3
+import matplotlib.pyplot as plt
 
 
 def get_data(file_name):
@@ -53,8 +54,23 @@ def calculate_distance(latitude_1, longitude_1, latitude_2, longitude_2):
     return 2 * 6371 * asin(sqrt(formula))
 
 
-def create_worksheet(file_name):
+def show_plot(data, h):
+    time, pr = [], []
+    step = 0
+    for i in data:
+        time.append(step)
+        step += h / 3600
+        pr.append(i[3])
+    plt.plot(time, pr, label='v - prędkość [km/h]')
+    plt.xlabel('t [h]', fontsize=14)
+    plt.legend(fontsize=14, loc='upper left')
+    plt.show()
+
+
+def create_worksheet(file_name, step=30, test=False):
     """
+    :param step: step for regulator in seconds
+    :param test: True if we want only test pi controller
     :param file_name: name of new database file
     :return: Excel file with all the necessary data
     """
@@ -94,8 +110,12 @@ def create_worksheet(file_name):
                 file_data.append([date_time[i], date_time[i + 1], distance, speed])
 
         file_data = pi_controller(file_data, 30)
-        c.executemany("INSERT INTO data (date_previous, date_current, distance, speed, fuel_consumption) "
-                      "VALUES (?, ?, ?, ?, ?)", file_data)
+
+        if test:
+            show_plot(file_data, step)
+        else:
+            c.executemany("INSERT INTO data (date_previous, date_current, distance, speed, fuel_consumption) "
+                          "VALUES (?, ?, ?, ?, ?)", file_data)
 
     conn.commit()
     conn.close()

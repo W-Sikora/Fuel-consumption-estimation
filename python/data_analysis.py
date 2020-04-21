@@ -1,9 +1,5 @@
-import matplotlib.pyplot as plt
 import numpy as np
 import datetime as da
-import pandas as pd
-import os
-import sqlite3
 
 
 def calculate_distance(speed, step):
@@ -38,10 +34,10 @@ def calculate_speed_with_PI(speed_previous, speed, time, h):
     t = np.arange(start=0, stop=T + h, step=h)
     v = np.zeros_like(t)
     e = np.zeros_like(t)
-    u = np.zeros_like(t)  # siła [N]
+    u = np.zeros_like(t)  # force [N]
 
-    m = 1500  # [kg]
-    mu = 50 * 3.6  # [N * s / m] opór
+    m = 1500  # mass [kg]
+    mu = 50 * 3.6  # [N * s / m] resistance
     set_v = speed  # [km/h]
 
     initial_v = speed_previous  # [km/h]
@@ -49,8 +45,9 @@ def calculate_speed_with_PI(speed_previous, speed, time, h):
 
     e[0] = set_v - v[0]
     time_array = np.append(time_array, step)
-    k_p, k_i = 100000, 15000
+    k_p, k_i = 4000, 1
     cum_e = e[0]
+
     for i in range(t.size - 1):
         v[i + 1] = v[i] + h * (-mu * v[i] + u[i]) / m
         e[i + 1] = set_v - v[i + 1]
@@ -69,15 +66,15 @@ def calculate_fuel_consumption(v):
     v: car speed
     FC: fuel consumption [L/100 km]
     """
-    if v > 13.1:
-        FC = 135.44 - 2.314 * v + 0.0144 * v ** 2
-    elif v >= 5:
-        FC = 428.06 - 46.696 * v + 1.531 * v ** 2
+    if v == 0:
+        fuel_consumption = 0
+    elif v > 13.1:
+        fuel_consumption = 135.44 - 2.314 * v + 0.0144 * v ** 2
     else:
-        FC = 0
-    FC = FC / 10  # zamiana [g/km] na [kg/100km]
-    FC = FC / 0.8  # zamiana kg na litry
-    return FC
+        fuel_consumption = 428.06 - 46.696 * v + 1.531 * v ** 2
+    fuel_consumption = fuel_consumption / 10  # conversion of units [g/km] -> [kg/100km]
+    fuel_consumption = fuel_consumption / 0.8  # conversion of units  kg -> litres
+    return fuel_consumption
 
 
 def fuel_consumption(speed_PI):
@@ -96,9 +93,12 @@ def pi_controller(data, step=30):
     """
     step /= 3600
     export = []
-    for i in range(len(data)-1):
+    for i in range(len(data) - 1):
         time = calculate_time(data[i][1], data[i][0])
         speed_PI = calculate_speed_with_PI(data[i][3], data[i + 1][3], time, step)
+        for z in range(len(speed_PI)):
+            if speed_PI[z] < 0:
+                speed_PI[z] = 0
         fuel_consumption_array = fuel_consumption(speed_PI)
         distance = calculate_distance(speed_PI, step)
 
@@ -115,25 +115,3 @@ def pi_controller(data, step=30):
             row.append(fuel_consumption_array[j])
             export.append(row)
     return export
-
-
-def main():
-    conn = sqlite3.connect('data.db')
-    c = conn.cursor()
-    data = c.execute("SELECT date_previous, date_current, distance, speed, fuel_consumption FROM data").fetchall()
-    h = 30
-    export = pi_controller(data[:100], h)
-    time, pr = [], []
-    step = 0
-    for i in export:
-        time.append(step)
-        step += h / 3600
-        pr.append(i[3])
-    plt.plot(time, pr, label='v - prędkość [km/h]')
-    plt.xlabel('t [h]', fontsize=14)
-    plt.legend(fontsize=14, loc='upper left')
-    plt.show()
-
-
-if __name__ == '__main__':
-    main()
