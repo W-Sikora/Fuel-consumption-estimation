@@ -1,93 +1,84 @@
-package pl.wsikora.;
-
+package com.company;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Calculation {
-    private LocalDateTime previous;
-    private double latitude1;
-    private double longitude1;
-    private LocalDateTime current;
-    private double latitude2;
-    private double longitude2;
+    private List<LocalDateTime> times = new ArrayList<>();
+    private List<Double> latitudes = new ArrayList<>();
+    private List<Double> longitudes = new ArrayList<>();
 
     public Calculation() {
     }
 
-    public Calculation(LocalDateTime previous, double latitude1, double longitude1, LocalDateTime current, double latitude2, double longitude2) {
-        this.previous = previous;
-        this.latitude1 = latitude1;
-        this.longitude1 = longitude1;
-        this.current = current;
-        this.latitude2 = latitude2;
-        this.longitude2 = longitude2;
+    public Calculation(List<LocalDateTime> times, List<Double> latitudes, List<Double> longitude) {
+        this.times = new ArrayList<>();
+        this.latitudes = new ArrayList<>();
+        this.longitudes = new ArrayList<>();
     }
 
-    public LocalDateTime getPrevious() {
-        return previous;
+    public List<LocalDateTime> getTimes() {
+        return times;
     }
 
-    public void setPrevious(LocalDateTime previous) {
-        this.previous = previous;
+    public void setTimes(LocalDateTime time) {
+        this.times.add(time);
     }
 
-    public double getLatitude1() {
-        return latitude1;
+    public List<Double> getLatitudes() {
+        return latitudes;
     }
 
-    public void setLatitude1(double latitude1) {
-        this.latitude1 = latitude1;
+    public void setLatitudes(Double latitude) {
+        this.latitudes.add(latitude);
     }
 
-    public double getLongitude1() {
-        return longitude1;
+    public List<Double> getLongitudes() {
+        return longitudes;
     }
 
-    public void setLongitude1(double longitude1) {
-        this.longitude1 = longitude1;
+    public void setLongitudes(Double longitude) {
+        this.longitudes.add(longitude);
     }
 
-    public LocalDateTime getCurrent() {
-        return current;
+    public List<Double> getDistanceList() {
+        List<Double> distanceList = new ArrayList<>();
+        if (latitudes.size() == longitudes.size() && latitudes.size() > 1) {
+            for (int i = 0; i < latitudes.size() - 1; i++) {
+                distanceList.add(calculateDistance(
+                        latitudes.get(i + 1),
+                        latitudes.get(i),
+                        longitudes.get(i + 1),
+                        longitudes.get(i)));
+            }
+        }
+        return distanceList;
     }
 
-    public void setCurrent(LocalDateTime current) {
-        this.current = current;
-    }
-
-    public double getLatitude2() {
-        return latitude2;
-    }
-
-    public void setLatitude2(double latitude2) {
-        this.latitude2 = latitude2;
-    }
-
-    public double getLongitude2() {
-        return longitude2;
-    }
-
-    public void setLongitude2(double longitude2) {
-        this.longitude2 = longitude2;
-    }
-
-    private double setDistance() {
-        double formula = 0.5 - Math.cos(Math.toRadians(latitude2 - latitude1)) / 2
-                + Math.cos(Math.toRadians(latitude1)) * Math.cos(Math.toRadians(latitude2))
-                * (1 - Math.cos(Math.toRadians(longitude2 - longitude1))) / 2;
+    private double calculateDistance(double latitudePrevious, double latitudeCurrent, double longitudePrevious, double longitudeCurrent) {
+        double formula = 0.5 - Math.cos(Math.toRadians(latitudeCurrent - latitudePrevious)) / 2
+                + Math.cos(Math.toRadians(latitudePrevious)) * Math.cos(Math.toRadians(latitudeCurrent))
+                * (1 - Math.cos(Math.toRadians(longitudeCurrent - longitudePrevious))) / 2;
         return 2 * 6371 * Math.asin(Math.sqrt(formula));
     }
 
-    private double setTime() {
-        double interval = Duration.between(previous, current).getSeconds();
-        return interval / 3600;
+    private double calculateTime(LocalDateTime previous, LocalDateTime current) {
+        return (double) Duration.between(previous, current).getSeconds() / 3600;
     }
 
-    private double setSpeed() {
-        double time = setTime();
-        double distance = setDistance();
+    private List<Double> getTimeList() {
+        List<Double> timeList = new ArrayList<>();
+        if (times.size() > 1) {
+            for (int i = 0; i < times.size() - 1; i++) {
+                timeList.add(calculateTime(times.get(i), times.get(i + 1)));
+            }
+        }
+        return timeList;
+    }
+
+    private double calculateSpeed(double distance, double time) {
         if (time > 0) {
             return distance / time;
         } else {
@@ -95,19 +86,28 @@ public class Calculation {
         }
     }
 
-    public static void main(String[] args) {
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    public List<Double> getSpeedList() {
+        List<Double> speedList, distanceList, timeList;
+        speedList = new ArrayList<>();
+        distanceList = getDistanceList();
+        timeList = getTimeList();
+        if (distanceList.size() == timeList.size() && distanceList.size() > 0) {
+            for (int i = 0; i < distanceList.size(); i++) {
+                speedList.add(calculateSpeed(distanceList.get(i), timeList.get(i)));
+            }
+        }
+        return speedList;
+    }
 
-        Calculation calculation = new Calculation();
-        calculation.setPrevious(LocalDateTime.parse("2008-02-02 15:38:32", formatter));
-        calculation.setLatitude1(39.92262);
-        calculation.setLongitude1(116.43453);
-        calculation.setCurrent(LocalDateTime.parse("2008-02-02 23:44:32", formatter));
-        calculation.setLatitude2(39.92572);
-        calculation.setLongitude2(122.44723);
-
-        System.out.println(calculation.setDistance());
-        System.out.println(calculation.setTime());
-        System.out.println(calculation.setSpeed());
+    @Override
+    public String toString() {
+        return "Calculation{" +
+                "\ntimes=" + times.toString() +
+                ",\nlatitudes=" + latitudes.toString() +
+                ",\nlongitudes=" + longitudes.toString() +
+                ",\ntime durations=" + getTimeList() +
+                ",\ndistances=" + getDistanceList() +
+                ",\nspeeds=" + getSpeedList() +
+                "\n}";
     }
 }
