@@ -24,5 +24,9 @@ public class Main {
             System.out.println(calculation.toString());
             i++;
         }
+        JsonObject jsonObj = new JsonObject();
+        JsonArray jsonArray = new Gson().toJsonTree(calculation.getSpeedList()).getAsJsonArray();
+        jsonObj.add("speeds", jsonArray);
+        System.out.println(jsonObj);
     }
 }
