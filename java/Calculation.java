@@ -1,4 +1,3 @@
-package com.company;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -65,7 +64,7 @@ public class Calculation {
     }
 
     private double calculateTime(LocalDateTime previous, LocalDateTime current) {
-        return (double) Duration.between(previous, current).getSeconds() / 3600;
+        return (double) Duration.between(previous, current).toNanos() / 3600000000000L;
     }
 
     private List<Double> getTimeList() {
@@ -99,15 +98,40 @@ public class Calculation {
         return speedList;
     }
 
+    public List<Double> parse (List<Double> list, String unit) {
+        double converter;
+        switch (unit) {
+            case "s":
+                converter = 3600;
+                break;
+            case "m":
+                converter = 1000;
+                break;
+            case "m/s":
+                converter = 1 / 3.6;
+                break;
+            default:
+                converter = 1;
+        }
+        List<Double> parsedList = new ArrayList<>();
+        for (Double element : list) {
+            parsedList.add(element * converter);
+        }
+        return parsedList;
+    }
+
     @Override
     public String toString() {
         return "Calculation{" +
-                "\ntimes=" + times.toString() +
-                ",\nlatitudes=" + latitudes.toString() +
-                ",\nlongitudes=" + longitudes.toString() +
-                ",\ntime durations=" + getTimeList() +
-                ",\ndistances=" + getDistanceList() +
-                ",\nspeeds=" + getSpeedList() +
+                "\ntimes = " + times.toString() +
+                ",\nlatitudes = " + latitudes.toString() +
+                ",\nlongitudes = " + longitudes.toString() +
+                ",\ntime durations [h] = " + getTimeList() +
+                ",\ntime durations [s] = " + parse(getTimeList(), "s") +
+                ",\ndistances [km] = " + getDistanceList() +
+                ",\ndistances [m] = " + parse(getDistanceList(), "m") +
+                ",\nspeeds [km/h] = " + getSpeedList() +
+                ",\nspeeds [m/s] = " + parse(getSpeedList(), "m/s") +
                 "\n}";
     }
 }
