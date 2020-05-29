@@ -98,7 +98,7 @@ public class Calculation {
         return speedList;
     }
 
-    public List<Double> parse (List<Double> list, String unit) {
+    private double setConverter(String unit) {
         double converter;
         switch (unit) {
             case "s":
@@ -111,27 +111,46 @@ public class Calculation {
                 converter = 1 / 3.6;
                 break;
             default:
-                converter = 1;
+                converter = 0;
         }
+        return converter;
+    }
+
+    private double parse(double value, String unit) {
+        return value * setConverter(unit);
+    }
+
+    private List<Double> parseToList(List<Double> list, String unit) {
         List<Double> parsedList = new ArrayList<>();
         for (Double element : list) {
-            parsedList.add(element * converter);
+            parsedList.add(parse(element, unit));
         }
         return parsedList;
     }
 
     @Override
     public String toString() {
-        return "Calculation{" +
+        return "Calculation {" +
                 "\ntimes = " + times.toString() +
                 ",\nlatitudes = " + latitudes.toString() +
                 ",\nlongitudes = " + longitudes.toString() +
                 ",\ntime durations [h] = " + getTimeList() +
-                ",\ntime durations [s] = " + parse(getTimeList(), "s") +
+                ",\ntime durations [s] = " + parseToList(getTimeList(), "s") +
                 ",\ndistances [km] = " + getDistanceList() +
-                ",\ndistances [m] = " + parse(getDistanceList(), "m") +
+                ",\ndistances [m] = " + parseToList(getDistanceList(), "m") +
                 ",\nspeeds [km/h] = " + getSpeedList() +
-                ",\nspeeds [m/s] = " + parse(getSpeedList(), "m/s") +
+                ",\nspeeds [m/s] = " + parseToList(getSpeedList(), "m/s") +
+                "\n}";
+    }
+
+    public String showLast() {
+        double lastDuration = getTimeList().get(getTimeList().size() - 1);
+        double lastDistance = getDistanceList().get(getDistanceList().size() - 1);
+        double lastSpeed = getSpeedList().get(getSpeedList().size() - 1);
+        return "Last calculation {" +
+                "\ntime duration [s] = " + parse(lastDuration, "s") +
+                ",\ndistance [m] = " + parse(lastDistance, "m") +
+                ",\nspeed [m/s] = " + parse(lastSpeed, "m/s") +
                 "\n}";
     }
 }
