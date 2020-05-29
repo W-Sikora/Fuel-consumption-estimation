@@ -144,13 +144,23 @@ public class Calculation {
     }
 
     public String showLast() {
-        double lastDuration = getTimeList().get(getTimeList().size() - 1);
-        double lastDistance = getDistanceList().get(getDistanceList().size() - 1);
-        double lastSpeed = getSpeedList().get(getSpeedList().size() - 1);
-        return "Last calculation {" +
-                "\ntime duration [s] = " + parse(lastDuration, "s") +
-                ",\ndistance [m] = " + parse(lastDistance, "m") +
-                ",\nspeed [m/s] = " + parse(lastSpeed, "m/s") +
-                "\n}";
+        if (getTimeList().size() > 0) {
+            double lastDuration = getTimeList().get(getTimeList().size() - 1);
+            double lastDistance = getDistanceList().get(getDistanceList().size() - 1);
+            double lastSpeed = getSpeedList().get(getSpeedList().size() - 1);
+            return "Last calculation {" +
+                    "\ntime duration:" +
+                    "\n\t[s] = " + parse(lastDuration, "s") +
+                    "\n\t[h] = " + lastDuration +
+                    "\ndistance:" +
+                    "\n\t[m] = " + parse(lastDistance, "m") +
+                    "\n\t[km] = " + lastDistance +
+                    "\nspeed:" +
+                    "\n\t[m/s] = " + parse(lastSpeed, "m/s") +
+                    "\n\t[km/h] = " + lastSpeed +
+                    "\n}";
+        } else {
+            return "nothing to show";
+        }
     }
 }
