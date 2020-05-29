@@ -160,7 +160,7 @@ public class Calculation {
                     "\n\t[km/h] = " + lastSpeed +
                     "\n}";
         } else {
-            return "nothing to show";
+            return "Nothing to show";
         }
     }
 }
