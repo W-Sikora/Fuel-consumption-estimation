@@ -21,7 +21,11 @@ The project was created with:
 - Java 11
 
 ## Examples
-
+```jupyter
+model = load_model('network_name.h5')
+model.summary()
+predictions = model.predict(inputs)
+```
 ## References
 - Kanarachos S., Mathew J., Fitzpatrick M. E. **[Instantaneous vehicle fuel consumption estimation using smartphones and recurrent neural networks](https://www.sciencedirect.com/science/article/pii/S0957417418307681?via%3Dihub)**. *Expert Systems With Applications 120 (2019) 436–447* 
 - Chollet F. **Deep Learning with Python** *Manning Publications (2018)*
